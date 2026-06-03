@@ -22,3 +22,8 @@ versions:
     description: Added customer email field
     createdOn: "2024-06-01"
     content: ./order-created-v2.avsc
+  - version: "3.0.0"
+    state: ENABLED
+    description: Added optional shipping address
+    createdOn: "2026-06-03"
+    content: ./order-created-v3.avsc
