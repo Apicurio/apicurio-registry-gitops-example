@@ -92,6 +92,20 @@ The `registryIds` field controls which registry instance loads each entity:
 | fulfillment group + artifacts | `[prod, staging]` | Both |
 | experimental group + artifacts | `[staging]` | Staging only |
 
+## Test Branches
+
+The following branches are used by the Apicurio Registry operator integration tests
+for dry-run validation. **Do not modify or delete these branches** without updating the
+corresponding tests in `operator/controller/src/test/java/.../it/GitOpsITTest.java`.
+
+| Branch | Purpose | Expected Validation Result |
+|--------|---------|---------------------------|
+| `test/valid-pr` | Adds an optional field to `order-created` (backward compatible) | Success |
+| `test/invalid-pr` | Removes required fields from `order-created` (backward incompatible) | Failure |
+
+These branches simulate pull request changes that the dry-run validation endpoint validates
+against the registry's configured rules (BACKWARD compatibility on the `order-created` artifact).
+
 ## Data Format
 
 See the [Apicurio Registry GitOps documentation](https://github.com/Apicurio/apicurio-registry/blob/main/app/src/main/java/io/apicurio/registry/storage/impl/gitops/README.md)
