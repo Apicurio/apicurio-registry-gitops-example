@@ -1,0 +1,74 @@
+# Validate Schema Changes
+#
+# Validates schema changes in pull requests against a running Apicurio Registry
+# instance using the dry-run validation API. Blocks PR merges if the changes
+# would break schema compatibility rules.
+#
+# Prerequisites:
+#   1. A running Apicurio Registry instance in GitOps mode, accessible from GitHub Actions
+#   2. The registry must be configured to pull from this repository
+#   3. Configure the following repository variables (Settings > Secrets and variables > Actions > Variables):
+#      - REGISTRY_URL: Base URL of the registry (e.g., https://registry.example.com)
+#
+# Optional:
+#   - REGISTRY_REPO_ID: Repository ID in the registry (defaults to "default")
+#   - REGISTRY_TOKEN: Bearer token for registry authentication (store as a secret)
+#
+# How it works:
+#   1. PR is opened or updated
+#   2. The workflow calls the registry's dry-run validation endpoint with the PR branch name
+#   3. The registry's sidecar fetches the PR branch, loads the data, and validates it
+#      against the configured rules (validity, compatibility, integrity)
+#   4. The workflow reports the result as a PR check
+#
+# For more information, see:
+#   - https://github.com/Apicurio/apicurio-registry/blob/main/app/src/main/java/io/apicurio/registry/storage/impl/gitops/README.md
+
+name: Validate Schemas
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**/*.registry.yaml'
+      - '**/*.registry.json'
+      - '**/*.ar.yaml'
+      - '**/*.ar.json'
+      - '**/*.avsc'
+      - '**/*.proto'
+      - '**/*.json'
+      - '**/*.yaml'
+      - '**/*.yml'
+
+jobs:
+  validate:
+    name: Validate schema changes
+    runs-on: ubuntu-latest
+    # Only run if REGISTRY_URL is configured
+    if: vars.REGISTRY_URL != ''
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install tsx
+        run: npm install -g tsx
+
+      - name: Validate schemas
+        env:
+          REGISTRY_URL: ${{ vars.REGISTRY_URL }}
+          REGISTRY_REPO_ID: ${{ vars.REGISTRY_REPO_ID || 'default' }}
+          REGISTRY_REF: ${{ github.head_ref }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          REGISTRY_TIMEOUT: '300'
+        run: npx tsx scripts/validate.ts
+
+      - name: Report result
+        if: failure()
+        run: |
+          echo "::error::Schema validation failed. Check the validation output above for details."
+          echo "The changes in this PR would break schema compatibility rules configured in the registry."

@@ -92,6 +92,32 @@ The `registryIds` field controls which registry instance loads each entity:
 | fulfillment group + artifacts | `[prod, staging]` | Both |
 | experimental group + artifacts | `[staging]` | Staging only |
 
+## PR Validation
+
+This repository includes a GitHub Actions workflow (`.github/workflows/validate-schemas.yml`)
+that validates schema changes in pull requests against a running Apicurio Registry instance.
+
+### Setup for your fork
+
+1. Deploy an Apicurio Registry instance in GitOps mode, configured to pull from your fork
+2. Go to **Settings > Secrets and variables > Actions > Variables**
+3. Add repository variable: `REGISTRY_URL` = your registry's base URL (e.g., `https://registry.example.com`)
+4. (Optional) Add variable: `REGISTRY_REPO_ID` = your repository ID (default: `default`)
+5. (Optional) Add secret: `REGISTRY_TOKEN` = bearer token for registry authentication
+
+Once configured, the workflow runs automatically on PRs that modify schema files and reports
+pass/fail as a PR check.
+
+### How it works
+
+The workflow uses `scripts/validate.ts` to:
+1. Call `POST /admin/gitops/validate` with the PR branch name
+2. Poll `GET /admin/gitops/validate/{taskId}` until the validation completes
+3. Report success or failure with detailed error messages
+
+The validation runs the same rules as a normal GitOps sync (validity, compatibility, integrity)
+but without affecting the live registry data.
+
 ## Test Branches
 
 The following branches are used by the Apicurio Registry operator integration tests
