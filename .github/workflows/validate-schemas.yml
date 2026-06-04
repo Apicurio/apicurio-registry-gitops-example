@@ -101,7 +101,9 @@ jobs:
 
             const body = `## ❌ Schema Validation Failed
 
-            The changes in this PR would break schema rules configured in the registry.
+            The registry could not load the data from this branch. This can be caused by
+            schema compatibility violations, syntax errors, missing files, invalid references,
+            or other data issues.
             ${errorsTable}
             <details>
             <summary>Full validation output</summary>
@@ -112,9 +114,9 @@ jobs:
 
             </details>
 
-            > This check validates your schema changes against the registry's configured rules
-            > (validity, compatibility, integrity) using the dry-run validation API.
-            > Fix the reported errors and push again to re-run the check.`;
+            > This check runs a dry-run validation against the registry — it loads and validates
+            > your changes without affecting live data. Fix the reported issues and push again
+            > to re-run the check.`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
