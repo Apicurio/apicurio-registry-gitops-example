@@ -19,7 +19,7 @@
 #   2. The workflow calls the registry's dry-run validation endpoint with the PR branch name
 #   3. The registry's sidecar fetches the PR branch, loads the data, and validates it
 #      against the configured rules (validity, compatibility, integrity)
-#   4. The workflow reports the result as a PR check
+#   4. The workflow reports the result as a PR check and posts a comment on failure
 #
 # For more information, see:
 #   - https://github.com/Apicurio/apicurio-registry/blob/main/app/src/main/java/io/apicurio/registry/storage/impl/gitops/README.md
@@ -40,6 +40,10 @@ on:
       - '**/*.yaml'
       - '**/*.yml'
 
+# Allow the workflow to post PR comments
+permissions:
+  pull-requests: write
+
 jobs:
   validate:
     name: Validate schema changes
@@ -59,16 +63,45 @@ jobs:
         run: npm install -g tsx
 
       - name: Validate schemas
+        id: validate
         env:
           REGISTRY_URL: ${{ vars.REGISTRY_URL }}
           REGISTRY_REPO_ID: ${{ vars.REGISTRY_REPO_ID || 'default' }}
           REGISTRY_REF: ${{ github.head_ref }}
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
           REGISTRY_TIMEOUT: '300'
-        run: npx tsx scripts/validate.ts
-
-      - name: Report result
-        if: failure()
         run: |
-          echo "::error::Schema validation failed. Check the validation output above for details."
-          echo "The changes in this PR would break schema compatibility rules configured in the registry."
+          npx tsx scripts/validate.ts 2>&1 | tee /tmp/validation-output.txt
+          exit ${PIPESTATUS[0]}
+
+      - name: Comment on PR with validation errors
+        if: failure() && steps.validate.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('/tmp/validation-output.txt', 'utf8');
+
+            const body = `## ❌ Schema Validation Failed
+
+            The changes in this PR would break schema rules configured in the registry.
+
+            <details>
+            <summary>Validation output</summary>
+
+            \`\`\`
+            ${output}
+            \`\`\`
+
+            </details>
+
+            > This check validates your schema changes against the registry's configured rules
+            > (validity, compatibility, integrity) using the dry-run validation API.
+            > Fix the reported errors and push again to re-run the check.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
