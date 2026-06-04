@@ -70,6 +70,7 @@ jobs:
           REGISTRY_REF: ${{ github.head_ref }}
           REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
           REGISTRY_TIMEOUT: '300'
+          VALIDATION_RESULT_FILE: /tmp/validation-result.json
         run: |
           npx tsx scripts/validate.ts 2>&1 | tee /tmp/validation-output.txt
           exit ${PIPESTATUS[0]}
@@ -82,12 +83,28 @@ jobs:
             const fs = require('fs');
             const output = fs.readFileSync('/tmp/validation-output.txt', 'utf8');
 
+            let errorsTable = '';
+            try {
+              const result = JSON.parse(fs.readFileSync('/tmp/validation-result.json', 'utf8'));
+              if (result.errors && result.errors.length > 0) {
+                errorsTable = '\n\n| # | Error | Source | File |\n|---|-------|--------|------|\n';
+                result.errors.forEach((err, i) => {
+                  const source = err.source || '-';
+                  const context = err.context || '-';
+                  const detail = err.detail.replace(/\|/g, '\\|');
+                  errorsTable += `| ${i + 1} | ${detail} | ${source} | ${context} |\n`;
+                });
+              }
+            } catch (e) {
+              // Result file may not exist if validation timed out
+            }
+
             const body = `## ❌ Schema Validation Failed
 
             The changes in this PR would break schema rules configured in the registry.
-
+            ${errorsTable}
             <details>
-            <summary>Validation output</summary>
+            <summary>Full validation output</summary>
 
             \`\`\`
             ${output}

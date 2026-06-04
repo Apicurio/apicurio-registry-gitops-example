@@ -162,6 +162,13 @@ async function main() {
         process.exit(2);
     }
 
+    // Write result JSON for CI to parse (e.g., for PR comments)
+    const resultFile = process.env.VALIDATION_RESULT_FILE;
+    if (resultFile) {
+        const fs = await import("fs");
+        fs.writeFileSync(resultFile, JSON.stringify(result, null, 2));
+    }
+
     // Report results
     if (result.result === "success") {
         console.log("✅ Validation passed");
