@@ -99,7 +99,7 @@ jobs:
               // Result file may not exist if validation timed out
             }
 
-            const body = `## ❌ Schema Validation Failed
+            const body = `## ❌ Registry Data Validation Failed
 
             The registry could not load the data from this branch. This can be caused by
             schema compatibility violations, syntax errors, missing files, invalid references,
