@@ -1,4 +1,6 @@
 # Apicurio Registry GitOps Example
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FApicurio%2Fapicurio-registry-gitops-example.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FApicurio%2Fapicurio-registry-gitops-example?ref=badge_shield)
+
 
 Example data repository for [Apicurio Registry](https://github.com/Apicurio/apicurio-registry)
 in GitOps mode. Demonstrates how schemas and registry metadata can be managed declaratively
@@ -136,3 +138,7 @@ against the registry's configured rules (BACKWARD compatibility on the `order-cr
 
 See the [Apicurio Registry GitOps documentation](https://github.com/Apicurio/apicurio-registry/blob/main/app/src/main/java/io/apicurio/registry/storage/impl/gitops/README.md)
 for the full data format reference.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FApicurio%2Fapicurio-registry-gitops-example.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FApicurio%2Fapicurio-registry-gitops-example?ref=badge_large)
